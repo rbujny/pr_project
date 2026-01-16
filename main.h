@@ -15,8 +15,8 @@
 #define ROOT 0
 
 /* Parametry gry */
-#define P_GUNS 2       
-#define X_CYCLES 10      
+#define P_GUNS 1     
+#define X_CYCLES 6      
 
 extern int rank;
 extern int size;

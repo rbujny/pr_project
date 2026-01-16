@@ -81,15 +81,6 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    if (rank == 0) {
-        if (X_CYCLES % 2 != 0) {
-            printf("UWAGA: Liczba cykli (%d) jest nieparzysta. Rozgrywka może być niezbalansowana (brak równego podziału ról).\n", X_CYCLES);
-        }
-        if (size % 2 != 0) {
-            printf("UWAGA: Liczba procesów (%d) jest nieparzysta. Rozgrywka może być niezbalansowana (ktoś będzie pauzował).\n", size);
-        }
-    }
-
     srand(rank);
 
     request_queue = malloc(sizeof(request_t) * size * 2);

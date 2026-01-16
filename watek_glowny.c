@@ -16,81 +16,32 @@ int compare_players(const void *a, const void *b) {
 
 
 void generate_matrix() {
-    
-    // Tylko ROOT może generować
-    if (rank == ROOT) {
-        println("ROOT: Generuję macierz...");
-        srand(time(NULL)); 
-
-        int *base = malloc(sizeof(int) * X_CYCLES);
-        for (int k = 0; k < X_CYCLES; k++) base[k] = (k < X_CYCLES/2) ? 1 : 0;
-
-        // Przypisujemy wzorce z przesunięciem, żeby wykorzystać przestrzeń kombinacji
-        for (int i = 0; i < size; i++) {
-            int shift = i % X_CYCLES; 
-            
-            if (i % 2 == 0) {
-                // Gracz parzysty: Wzorzec z przesunięciem
-                for (int c = 1; c <= X_CYCLES; c++) {
-                    int idx = (c - 1 + (i/2)) % X_CYCLES;
-                    roles_matrix[i * (X_CYCLES + 1) + c] = base[idx];
-                }
-            } else {
-                // Gracz nieparzysty: Dokładny mirror poprzednika
-                for (int c = 1; c <= X_CYCLES; c++) {
-                    int partner_val = roles_matrix[(i-1) * (X_CYCLES + 1) + c];
-                    roles_matrix[i * (X_CYCLES + 1) + c] = (partner_val == 1) ? 0 : 1;
-                }
-            }
+    // Każdy proces generuje macierz deterministycznie (szachownica)
+    for (int i = 0; i < size; i++) {
+        for (int c = 1; c <= X_CYCLES; c++) {
+            roles_matrix[i * (X_CYCLES + 1) + c] = (i + c) % 2;
         }
-        free(base);
-
-        // Tasowanie kolumn
-        for (int k = 0; k < X_CYCLES * 3; k++) {
-            int c1 = 1 + rand() % X_CYCLES;
-            int c2 = 1 + rand() % X_CYCLES;
-            if (c1 == c2) continue;
-
-            for (int i = 0; i < size; i++) {
-                int temp = roles_matrix[i * (X_CYCLES + 1) + c1];
-                roles_matrix[i * (X_CYCLES + 1) + c1] = roles_matrix[i * (X_CYCLES + 1) + c2];
-                roles_matrix[i * (X_CYCLES + 1) + c2] = temp;
-            }
-        }
-
-        // Tasowanie wierszy
-        for (int k = 0; k < size * 3; k++) {
-            int r1 = rand() % size;
-            int r2 = rand() % size;
-            if (r1 == r2) continue;
-
-            for (int c = 1; c <= X_CYCLES; c++) {
-                int temp = roles_matrix[r1 * (X_CYCLES + 1) + c];
-                roles_matrix[r1 * (X_CYCLES + 1) + c] = roles_matrix[r2 * (X_CYCLES + 1) + c];
-                roles_matrix[r2 * (X_CYCLES + 1) + c] = temp;
-            }
-        }
-
-        printf("\n   === MACIERZ RÓL ===\n");
-        printf("   Gracz |");
-        for(int c=1; c<=X_CYCLES; c++) printf(" C%d |", c);
-        printf("\n");
-        for (int i = 0; i < size; i++) {
-            printf("   ID %d  |", i);
-            int k_count = 0;
-            for (int c = 1; c <= X_CYCLES; c++) {
-                int role = roles_matrix[i * (X_CYCLES + 1) + c];
-                if(role == ROLE_KILLER) k_count++;
-                printf(" %s |", (role == ROLE_KILLER ? "Z " : "O "));
-            }
-            printf("\n");
-        }
-        printf("   =========================================\n\n");
-        fflush(stdout);
     }
 
-    int buffer_size = size * (X_CYCLES + 1);
-    MPI_Bcast(roles_matrix, buffer_size, MPI_INT, ROOT, MPI_COMM_WORLD);
+#ifdef DEBUG
+    debug("=== MACIERZ RÓL ===");
+    char buff[1024];
+    int pos = 0;
+    pos += sprintf(buff + pos, "   Gracz |");
+    for(int c=1; c<=X_CYCLES; c++) pos += sprintf(buff + pos, " C%d |", c);
+    debug("%s", buff);
+
+    for (int i = 0; i < size; i++) {
+        pos = 0;
+        pos += sprintf(buff + pos, "   ID %d  |", i);
+        for (int c = 1; c <= X_CYCLES; c++) {
+            int role = roles_matrix[i * (X_CYCLES + 1) + c];
+            pos += sprintf(buff + pos, " %s |", (role == ROLE_KILLER ? "Z " : "O "));
+        }
+        debug("%s", buff);
+    }
+    debug("=========================================");
+#endif
 }
 
 void mainLoop()
@@ -203,6 +154,8 @@ void mainLoop()
         println("Rola: %s, Partner: %d", (my_role==ROLE_KILLER?"ZABÓJCA":"OFIARA"), partner);
 
         if (partner == -1) {
+            // println("Brak pary w tym cyklu. Otrzymuję punkt za pauzę.");
+            // score++;
             changeState(State_CycleFinished);
         } else {
             if (my_role == ROLE_VICTIM) changeState(State_WaitForAction);
