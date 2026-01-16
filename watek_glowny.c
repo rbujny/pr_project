@@ -16,10 +16,33 @@ int compare_players(const void *a, const void *b) {
 
 
 void generate_matrix() {
-    // Każdy proces generuje macierz deterministycznie (szachownica)
+    unsigned int seed = 100; // Wspólny seed
+
     for (int i = 0; i < size; i++) {
-        for (int c = 1; c <= X_CYCLES; c++) {
-            roles_matrix[i * (X_CYCLES + 1) + c] = (i + c) % 2;
+        if (i % 2 == 0) {
+            // Gracz parzysty
+            int *row = malloc(sizeof(int) * X_CYCLES);
+            
+            // Wypełnienie
+            for (int k = 0; k < X_CYCLES; k++) {
+                row[k] = (k < X_CYCLES / 2) ? 1 : 0;
+            }
+
+            // Tasowanie (Fisher-Yates shuffle)
+            for (int k = X_CYCLES - 1; k > 0; k--) {
+                int j = rand_r(&seed) % (k + 1);
+                int temp = row[k];
+                row[k] = row[j];
+                row[j] = temp;
+            }
+
+            for (int c = 1; c <= X_CYCLES; c++) roles_matrix[i * (X_CYCLES + 1) + c] = row[c-1];
+            free(row);
+        } else {
+            // Gracz nieparzysty
+            for (int c = 1; c <= X_CYCLES; c++) {
+                roles_matrix[i * (X_CYCLES + 1) + c] = !roles_matrix[(i-1) * (X_CYCLES + 1) + c];
+            }
         }
     }
 
