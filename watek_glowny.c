@@ -1,7 +1,7 @@
 #include "main.h"
 #include "watek_glowny.h"
 
-/* Pomocnicze */
+// Pomocnicze
 typedef struct {
     int id;
     int score;
@@ -16,19 +16,16 @@ int compare_players(const void *a, const void *b) {
 
 
 void generate_matrix() {
-    unsigned int seed = 100; // Wspólny seed
+    unsigned int seed = 100;
 
     for (int i = 0; i < size; i++) {
         if (i % 2 == 0) {
-            // Gracz parzysty
             int *row = malloc(sizeof(int) * X_CYCLES);
             
-            // Wypełnienie
             for (int k = 0; k < X_CYCLES; k++) {
                 row[k] = (k < X_CYCLES / 2) ? 1 : 0;
             }
 
-            // Tasowanie (Fisher-Yates shuffle)
             for (int k = X_CYCLES - 1; k > 0; k--) {
                 int j = rand_r(&seed) % (k + 1);
                 int temp = row[k];
@@ -39,7 +36,6 @@ void generate_matrix() {
             for (int c = 1; c <= X_CYCLES; c++) roles_matrix[i * (X_CYCLES + 1) + c] = row[c-1];
             free(row);
         } else {
-            // Gracz nieparzysty
             for (int c = 1; c <= X_CYCLES; c++) {
                 roles_matrix[i * (X_CYCLES + 1) + c] = !roles_matrix[(i-1) * (X_CYCLES + 1) + c];
             }
@@ -202,17 +198,12 @@ void mainLoop()
 
             for(int i=0; i<size; i++) {
                 if (i!=rank) {
-                    pthread_mutex_lock(&clock_mutex);
-                    lamport_clock++;
-                    pthread_mutex_unlock(&clock_mutex);
                     MPI_Send(req_pkt, 1, MPI_PACKET_T, i, CS_REQ, MPI_COMM_WORLD);
                 }
             }
             free(req_pkt);
 
-            /* 
-             * Oczekwianie na dostęp do sekcji krytycznej
-             */
+            // Oczekwianie na dostęp do sekcji krytycznej
             pthread_mutex_lock(&ack_mutex);
             while (1) {
                 int pos = queue_get_pos(rank);

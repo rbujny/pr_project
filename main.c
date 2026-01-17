@@ -22,7 +22,7 @@ pthread_mutex_t ack_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t cycle_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-/* Inicjalizacja zmiennych warunkowych */
+// Inicjalizacja zmiennych warunkowych
 pthread_cond_t cycle_cond = PTHREAD_COND_INITIALIZER;
 pthread_cond_t ack_cond = PTHREAD_COND_INITIALIZER;
 
@@ -73,15 +73,12 @@ void check_thread_support(int provided)
 
 int main(int argc, char **argv)
 {
-    MPI_Status status;
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     check_thread_support(provided);
     initiate_package_type();
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    srand(rank);
 
     request_queue = malloc(sizeof(request_t) * size * 2);
     request_queue_size = 0;
@@ -95,7 +92,6 @@ int main(int argc, char **argv)
     received_ack = malloc(sizeof(int) * size);
     memset(received_ack, 0, sizeof(int) * size);
 
-    /* Alokacja macierzy ról */
     roles_matrix = malloc(sizeof(int) * size * (X_CYCLES + 1)); 
 
     pthread_create( &commThread, NULL, startComThread , 0);

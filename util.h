@@ -2,9 +2,9 @@
 #define UTILH
 #include "main.h"
 
-/* Typ pakietu */
+// Typ pakietu
 typedef struct {
-    int ts;       /* Zegar Lamporta */
+    int ts;       // Zegar Lamporta
     int src;  
     int data; 
     int score;
@@ -12,22 +12,21 @@ typedef struct {
 
 #define NITEMS 4
 
-/* Typy wiadomości */
-#define CYCLE_SYNC 2
-#define CS_REQ 3
-#define CS_ACK 4
-#define CS_REL 5
-#define INTERACT_SHOOT 6
-#define GAME_OVER 7
+// Typy wiadomości
+#define CYCLE_SYNC 1
+#define CS_REQ 2
+#define CS_ACK 3
+#define CS_REL 4
+#define INTERACT_SHOOT 5
+#define GAME_OVER 6
 
-/* Role graczy */
+// Role graczy
 #define ROLE_VICTIM 0
 #define ROLE_KILLER 1
 
 extern MPI_Datatype MPI_PACKET_T;
 void initiate_package_type();
 
-/* wysyłanie pakietu, skrót: wskaźnik do pakietu (0 oznacza stwórz pusty pakiet), do kogo, z jakim typem */
 void sendPacket(packet_t *pkt, int destination, int tag);
 
 typedef enum {
@@ -44,10 +43,9 @@ typedef enum {
 
 extern state_t state;
 extern pthread_mutex_t stateMutex;
-/* zmiana stanu, obwarowana muteksem */
 void changeState( state_t );
 
-/* Funkcje pomocnicze do kolejki */
+// Funkcje pomocnicze do kolejki
 void queue_add(int ts, int src);
 void queue_remove(int src);
 int queue_get_pos(int src);
