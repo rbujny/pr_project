@@ -63,6 +63,38 @@ void generate_matrix() {
 #endif
 }
 
+void check_consistency() {
+    pthread_mutex_lock(&cycle_mutex);
+    int *my_view = malloc(sizeof(int) * size);
+    memcpy(my_view, player_scores, sizeof(int) * size);
+    pthread_mutex_unlock(&cycle_mutex);
+
+    int *all_views = NULL;
+    if (rank == ROOT) {
+        all_views = malloc(sizeof(int) * size * size);
+    }
+
+    MPI_Gather(my_view, size, MPI_INT, all_views, size, MPI_INT, ROOT, MPI_COMM_WORLD);
+
+    if (rank == ROOT) {
+        int consistent = 1;
+        for (int i = 1; i < size; i++) {
+            if (memcmp(all_views, all_views + i * size, sizeof(int) * size) != 0) {
+                consistent = 0;
+                println("Błąd spójności! Proces %d ma inną tablicę wyników niż proces 0.", i);
+            }
+        }
+        
+        if (consistent) {
+            println("Check Consistency: PASSED. Wszyscy gracze mają spójną tablicę wyników.");
+        } else {
+            println("Check Consistency: FAILED.");
+        }
+        free(all_views);
+    }
+    free(my_view);
+}
+
 void mainLoop()
 {
     changeState(State_Init);
@@ -256,6 +288,8 @@ void mainLoop()
 
     // Oczekiwanie na wszystkie wyniki
     MPI_Barrier(MPI_COMM_WORLD);
+
+    check_consistency();
 
     // Koniec gry
     changeState(State_FinishGame);
